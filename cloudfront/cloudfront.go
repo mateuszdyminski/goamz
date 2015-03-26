@@ -7,11 +7,12 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/AdRoll/goamz/aws"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/AdRoll/goamz/aws"
 )
 
 type CloudFront struct {
@@ -27,6 +28,10 @@ func NewKeyLess(auth aws.Auth, baseurl string) *CloudFront {
 }
 
 func New(baseurl string, key *rsa.PrivateKey, keyPairId string) *CloudFront {
+	if err := key.Validate(); err != nil {
+		panic("Given private key is not valid!")
+	}
+
 	return &CloudFront{
 		BaseURL:   baseurl,
 		keyPairId: keyPairId,
@@ -76,14 +81,9 @@ func (cf *CloudFront) generateSignature(policy []byte) (string, error) {
 	}
 
 	hashed := hash.Sum(nil)
-	var signed []byte
-	if cf.key.Validate() == nil {
-		signed, err = rsa.SignPKCS1v15(nil, cf.key, crypto.SHA1, hashed)
-		if err != nil {
-			return "", err
-		}
-	} else {
-		signed = hashed
+	signed, err := rsa.SignPKCS1v15(nil, cf.key, crypto.SHA1, hashed)
+	if err != nil {
+		return "", err
 	}
 	encoded := base64Replacer.Replace(base64.StdEncoding.EncodeToString(signed))
 
