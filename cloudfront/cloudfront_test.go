@@ -35,7 +35,7 @@ func TestSignedCannedURL(t *testing.T) {
 	query := make(url.Values)
 	query.Add("test", "value")
 
-	uri, err := cf.CannedSignedURL("test", "test=value", expireTime)
+	uri, err := cf.CannedSignedURL("test", expireTime)
 	if err != nil {
 		t.Fatal(err)
 	}
